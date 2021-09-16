@@ -2,16 +2,18 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"sync"
+	"time"
 
 	"github.com/korkmazkadir/bitcoindata"
 )
 
 func main() {
 
-	initialRount := 200000
+	initialRount := 600000
 	fetchCount := 10000
-	concurrency := 10
+	concurrency := 100
 
 	//blockChan := make(chan bitcoindata.Block, fetchCount)
 
@@ -27,7 +29,7 @@ func main() {
 		workChan := make(chan int, workChanCappacity)
 		workChans = append(workChans, workChan)
 
-		blockChan := make(chan bitcoindata.Block, 3)
+		blockChan := make(chan bitcoindata.Block, 2)
 		blockChans = append(blockChans, blockChan)
 
 		wgWorker.Add(1)
@@ -60,6 +62,16 @@ func main() {
 }
 
 func persist(blockChans []chan bitcoindata.Block) {
+	csvFile, err := os.OpenFile("block_header.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	defer csvFile.Close()
+
+	if _, err := csvFile.WriteString(bitcoindata.BlockCSVHeader()); err != nil {
+		panic(err)
+	}
 
 	index := 0
 	for {
@@ -71,6 +83,9 @@ func persist(blockChans []chan bitcoindata.Block) {
 		}
 
 		fmt.Printf("[%d] %s\n", block.BlockIndex, block.Hash)
+		if _, err := csvFile.WriteString(block.CSVString()); err != nil {
+			panic(err)
+		}
 
 		index++
 	}
@@ -88,10 +103,17 @@ func getData(workChan chan int, blockChan chan bitcoindata.Block) {
 			return
 		}
 
-		blocks, err := connector.FetchBlock(blockHeight)
+		var blocks []bitcoindata.Block
+		var err error
 
-		if err != nil {
-			panic(err)
+		for {
+			blocks, err = connector.FetchBlock(blockHeight)
+
+			if err == nil {
+				break
+			}
+
+			time.Sleep(2 * time.Second)
 		}
 
 		if len(blocks) == 1 {

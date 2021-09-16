@@ -1,5 +1,7 @@
 package bitcoindata
 
+import "fmt"
+
 type Block struct {
 	Hash         string `json:"hash"`
 	Version      int    `json:"ver"`
@@ -20,4 +22,16 @@ type Block struct {
 
 type APIResponse struct {
 	Blocks []Block `json:"blocks"`
+}
+
+func BlockCSVHeader() string {
+
+	csvHeader := fmt.Sprintf("Hash;Version;PrevBlock;MerkleRoot;Time;Bits;Nonce;TXCount;Size;BlockIndex;MainChain;Height;ReceivedTime;RelayedBy\n")
+	return csvHeader
+}
+
+func (b Block) CSVString() string {
+
+	csvStr := fmt.Sprintf("%s;%d;%s;%s;%d;%d;%d;%d;%d;%d;%t;%d;%d;%s\n", b.Hash, b.Version, b.PrevBlock, b.MerkleRoot, b.Time, b.Bits, b.Nonce, b.TXCount, b.Size, b.BlockIndex, b.MainChain, b.Height, b.ReceivedTime, b.RelayedBy)
+	return csvStr
 }

@@ -1,0 +1,50 @@
+---
+title: "Bitcoin Block Header Data"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars, echo=FALSE}
+
+library(tidyverse)
+
+blockDf <- read.csv(file = 'block_header.csv', sep = ";")
+
+indexDiff <- diff(blockDf$BlockIndex)
+
+issues <- indexDiff[indexDiff > 1]
+length(issues)
+head(issues)
+
+
+timeDiff <- diff(blockDf$Time)
+hist(timeDiff)
+
+timeDiffIssues <- timeDiff[timeDiff < 0]
+length(timeDiffIssues)
+head(timeDiffIssues)
+
+
+mine <- function ( blockInterval ){
+return(-log( 1.0 - runif(1) ) * blockInterval * 1  / 1 )
+}
+
+
+miningData <- c()
+for (i in 1:10000)
+  miningData[i] <- mine(600)
+
+
+
+hist(miningData)
+
+```
